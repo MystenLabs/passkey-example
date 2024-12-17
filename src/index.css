@@ -1,0 +1,198 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+.App {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+} 
+
+.wallet-button {
+  padding: 12px 24px;
+  font-size: 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.wallet-button:hover {
+  background-color: #45a049;
+}
+
+.wallet-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+} 
+
+.wallet-info {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.wallet-info h2 {
+  margin-top: 0;
+  color: #4CAF50;
+}
+
+.wallet-info p {
+  word-break: break-all;
+  font-family: monospace;
+  background: #fff;
+  padding: 0.5rem;
+  border-radius: 4px;
+} 
+
+.faucet-button {
+  margin-top: 1rem;
+  padding: 12px 24px;
+  font-size: 16px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.faucet-button:hover {
+  background-color: #1976D2;
+}
+
+.faucet-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.faucet-status {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background-color: #E8F5E9;
+  color: #2E7D32;
+}
+
+.faucet-status.error {
+  background-color: #FFEBEE;
+  color: #C62828;
+} 
+
+.transaction-button {
+  margin-top: 1rem;
+  padding: 12px 24px;
+  font-size: 16px;
+  background-color: #9C27B0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.transaction-button:hover {
+  background-color: #7B1FA2;
+}
+
+.transaction-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.transaction-status {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background-color: #E8F5E9;
+  color: #2E7D32;
+}
+
+.transaction-status.error {
+  background-color: #FFEBEE;
+  color: #C62828;
+} 
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.sign-button {
+  padding: 12px 24px;
+  font-size: 16px;
+  background-color: #FF9800;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.sign-button:hover {
+  background-color: #F57C00;
+}
+
+.sign-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.transaction-info {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #fff;
+  border-radius: 4px;
+}
+
+.transaction-info h3 {
+  margin-top: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.bytes {
+  word-break: break-all;
+  font-family: monospace;
+  font-size: 0.875rem;
+  background: #f5f5f5;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin: 0;
+} 
+
+.send-button {
+  padding: 12px 24px;
+  font-size: 16px;
+  background-color: #E91E63;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.send-button:hover {
+  background-color: #C2185B;
+}
+
+.send-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+} 
