@@ -1,3 +1,6 @@
+// Copyright (c) Mysten Labs, Inc.
+// SPDX-License-Identifier: Apache-2.0
+
 import React, { useEffect, useState } from 'react'
 import { BrowserPasskeyProvider, BrowserPasswordProviderOptions, PasskeyKeypair } from '@mysten/sui/keypairs/passkey';
 import { getFaucetHost, requestSuiFromFaucetV0 } from '@mysten/sui/faucet';
