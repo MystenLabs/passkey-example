@@ -186,22 +186,21 @@ const App: React.FC = () => {
             >
               Send Transaction
             </Button>
-
-            {txDigest && (
-              <div className="transaction-info">
-                <h3>Transaction Digest:</h3>
-                <p className="bytes">
-                  <a
-                    href={`https://suiscan.xyz/devnet/tx/${txDigest}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {txDigest}
-                  </a>
-                </p>
-              </div>
-            )}
           </div>
+          {txDigest && (
+            <div className="transaction-info">
+              <h3>Transaction Digest:</h3>
+              <p className="bytes">
+                <a
+                  href={`https://suiscan.xyz/devnet/tx/${txDigest}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {txDigest}
+                </a>
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
