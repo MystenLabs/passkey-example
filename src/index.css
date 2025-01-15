@@ -19,6 +19,46 @@ body {
   text-align: center;
 } 
 
+.button {
+  position: relative;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  height: 20px;
+  width: 20px;
+  animation: spin 1s linear infinite;
+}
+.spinner-track {
+  opacity: 0.25;
+}
+.spinner-head {
+  opacity: 0.75;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .wallet-button {
   padding: 12px 24px;
   font-size: 16px;
@@ -33,11 +73,6 @@ body {
 .wallet-button:hover {
   background-color: #45a049;
 }
-
-.wallet-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-} 
 
 .wallet-info {
   margin-top: 2rem;
@@ -75,11 +110,6 @@ body {
   background-color: #1976D2;
 }
 
-.faucet-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
-
 .faucet-status {
   margin-top: 1rem;
   padding: 0.5rem;
@@ -109,11 +139,6 @@ body {
   background-color: #7B1FA2;
 }
 
-.transaction-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
-
 .transaction-status {
   margin-top: 1rem;
   padding: 0.5rem;
@@ -135,6 +160,7 @@ body {
 }
 
 .sign-button {
+  margin-top: 1rem;
   padding: 12px 24px;
   font-size: 16px;
   background-color: #FF9800;
@@ -147,11 +173,6 @@ body {
 
 .sign-button:hover {
   background-color: #F57C00;
-}
-
-.sign-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
 }
 
 .transaction-info {
@@ -178,6 +199,7 @@ body {
 } 
 
 .send-button {
+  margin-top: 1rem;
   padding: 12px 24px;
   font-size: 16px;
   background-color: #E91E63;
@@ -191,8 +213,3 @@ body {
 .send-button:hover {
   background-color: #C2185B;
 }
-
-.send-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-} 
