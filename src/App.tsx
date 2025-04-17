@@ -15,7 +15,8 @@ import React, { useEffect, useState } from "react";
 import Button from "./Button";
 
 const passkeySavedName = "Sui Passkey Example";
-const authenticatorAttachment = "platform";
+// if you want to test with a local browser, change it to "platform" should be better.
+const authenticatorAttachment = "cross-platform"; // "platform"
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
