@@ -6,12 +6,17 @@ import { getFaucetHost, requestSuiFromFaucetV0 } from "@mysten/sui/faucet";
 import {
   BrowserPasskeyProvider,
   BrowserPasswordProviderOptions,
+  findCommonPublicKey,
   PasskeyKeypair,
 } from "@mysten/sui/keypairs/passkey";
 import { Transaction } from "@mysten/sui/transactions";
 import { fromBase64, toBase64 } from "@mysten/sui/utils";
 import React, { useEffect, useState } from "react";
 import Button from "./Button";
+
+const passkeySavedName = "Sui Passkey Example";
+// if you want to test with a local browser, change it to "platform" should be better.
+const authenticatorAttachment = "cross-platform"; // "platform"
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -26,8 +31,19 @@ const App: React.FC = () => {
   const [faucetLoading, setFaucetLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [signLoading, setSignLoading] = useState(false);
+
+  const [walletLoadLoading, setWalletLoadLoading] = useState(false);
+
   const [balance, setBalance] = useState<string | null>(null);
   const client = new SuiClient({ url: getFullnodeUrl("devnet") });
+
+  const passkeyProvider = new BrowserPasskeyProvider(passkeySavedName, {
+    rpName: passkeySavedName,
+    rpId: window.location.hostname,
+    authenticatorSelection: {
+      authenticatorAttachment,
+    },
+  } as BrowserPasswordProviderOptions);
 
   useEffect(() => {
     fetchBalance();
@@ -37,12 +53,7 @@ const App: React.FC = () => {
     try {
       setLoading(true);
 
-      const passkey = await PasskeyKeypair.getPasskeyInstance(
-        new BrowserPasskeyProvider("Sui Passkey Example", {
-          rpName: "Sui Passkey Example",
-          rpId: window.location.hostname,
-        } as BrowserPasswordProviderOptions)
-      );
+      const passkey = await PasskeyKeypair.getPasskeyInstance(passkeyProvider);
 
       const address = passkey.getPublicKey().toSuiAddress();
       setWalletAddress(address);
@@ -72,7 +83,6 @@ const App: React.FC = () => {
 
   const signTransaction = async () => {
     if (!passkeyInstance || !txBytes) return;
-
     setSignLoading(true);
     const bytes = fromBase64(txBytes);
     const sig = await passkeyInstance.signTransaction(bytes);
@@ -101,6 +111,27 @@ const App: React.FC = () => {
     await fetchBalance();
   };
 
+  const handleLoadWallet = async () => {
+    setWalletLoadLoading(true);
+    const testMessage = new TextEncoder().encode("Hello world!");
+    const possiblePks = await PasskeyKeypair.signAndRecover(
+      passkeyProvider,
+      testMessage
+    );
+
+    const testMessage2 = new TextEncoder().encode("Hello world 2!");
+    const possiblePks2 = await PasskeyKeypair.signAndRecover(
+      passkeyProvider,
+      testMessage2
+    );
+
+    const commonPk = findCommonPublicKey(possiblePks, possiblePks2);
+    const keypair = new PasskeyKeypair(commonPk.toRawBytes(), passkeyProvider);
+    setPasskeyInstance(keypair);
+    setWalletAddress(keypair.getPublicKey().toSuiAddress());
+    setWalletLoadLoading(false);
+  };
+
   const sendTransaction = async () => {
     if (!walletAddress || !signature) return;
 
@@ -121,14 +152,25 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <h1>Passkey Wallet Example on Sui Devnet</h1>
-      <Button
-        onClick={handleCreateWallet}
-        disabled={loading}
-        loading={loading}
-        className="wallet-button"
-      >
-        Create Passkey Wallet
-      </Button>
+
+      <div className="button-group">
+        <Button
+          onClick={handleCreateWallet}
+          disabled={loading}
+          loading={loading}
+          className="wallet-button"
+        >
+          Create Passkey Wallet
+        </Button>
+
+        <Button
+          onClick={handleLoadWallet}
+          disabled={walletLoadLoading}
+          loading={walletLoadLoading}
+        >
+          Load Passkey Wallet
+        </Button>
+      </div>
 
       {walletAddress && (
         <div className="wallet-info">
@@ -207,4 +249,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App; 
+export default App;
