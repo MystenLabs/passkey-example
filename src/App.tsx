@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
-import { getFaucetHost, requestSuiFromFaucetV0 } from "@mysten/sui/faucet";
+import { getFaucetHost, requestSuiFromFaucetV2 } from "@mysten/sui/faucet";
 import {
   BrowserPasskeyProvider,
   BrowserPasswordProviderOptions,
@@ -49,6 +49,20 @@ const App: React.FC = () => {
     fetchBalance();
   }, [walletAddress]);
 
+  useEffect(() => {
+    const localPublicKeyStr = localStorage.getItem("PublicKey");
+    if (!localPublicKeyStr)
+      return;
+    try {
+      const localPublicKey = new Uint8Array(localPublicKeyStr.split(',').map(item => Number(item)));
+      const keypair = new PasskeyKeypair(localPublicKey, passkeyProvider);
+      setPasskeyInstance(keypair);
+      setWalletAddress(keypair.getPublicKey().toSuiAddress());
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   const handleCreateWallet = async () => {
     try {
       setLoading(true);
@@ -58,6 +72,7 @@ const App: React.FC = () => {
       const address = passkey.getPublicKey().toSuiAddress();
       setWalletAddress(address);
       setPasskeyInstance(passkey);
+      localStorage.setItem("PublicKey", passkey.getPublicKey().toRawBytes().toString());
       console.log("Wallet created with address:", address);
     } catch (error) {
       console.error("Error creating wallet:", error);
@@ -102,7 +117,7 @@ const App: React.FC = () => {
     if (!walletAddress) return;
 
     setFaucetLoading(true);
-    await requestSuiFromFaucetV0({
+    await requestSuiFromFaucetV2({
       host: getFaucetHost("devnet"),
       recipient: walletAddress,
     });
@@ -127,6 +142,7 @@ const App: React.FC = () => {
 
     const commonPk = findCommonPublicKey(possiblePks, possiblePks2);
     const keypair = new PasskeyKeypair(commonPk.toRawBytes(), passkeyProvider);
+    localStorage.setItem("PublicKey", commonPk.toRawBytes().toString());
     setPasskeyInstance(keypair);
     setWalletAddress(keypair.getPublicKey().toSuiAddress());
     setWalletLoadLoading(false);
