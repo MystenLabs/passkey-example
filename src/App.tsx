@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
-import { getFaucetHost, requestSuiFromFaucetV0 } from "@mysten/sui/faucet";
 import {
   BrowserPasskeyProvider,
   BrowserPasswordProviderOptions,
@@ -13,10 +12,10 @@ import { Transaction } from "@mysten/sui/transactions";
 import { fromBase64, toBase64 } from "@mysten/sui/utils";
 import React, { useEffect, useState } from "react";
 import Button from "./Button";
+import { MultiSigPublicKey } from "@mysten/sui/multisig";
+import { Ed25519Keypair, Ed25519PublicKey } from "@mysten/sui/keypairs/ed25519";
 
 const passkeySavedName = "Sui Passkey Example";
-// if you want to test with a local browser, change it to "platform" should be better.
-const authenticatorAttachment = "cross-platform"; // "platform"
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -27,21 +26,27 @@ const App: React.FC = () => {
   const [passkeyInstance, setPasskeyInstance] = useState<PasskeyKeypair | null>(
     null
   );
+  const [multiSigPublicKey, setMultiSigPublicKey] = useState<MultiSigPublicKey | null>(
+    null
+  );
+  const [singleKeyPair, setSingleKeyPair] = useState<Ed25519Keypair | null>(
+    null
+  );
+  const [walletType, setWalletType] = useState<'single' | 'multisig' | null>(null);
   const [sendLoading, setSendLoading] = useState(false);
-  const [faucetLoading, setFaucetLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [signLoading, setSignLoading] = useState(false);
 
   const [walletLoadLoading, setWalletLoadLoading] = useState(false);
 
   const [balance, setBalance] = useState<string | null>(null);
-  const client = new SuiClient({ url: getFullnodeUrl("devnet") });
+  const client = new SuiClient({ url: getFullnodeUrl("testnet") });
 
   const passkeyProvider = new BrowserPasskeyProvider(passkeySavedName, {
     rpName: passkeySavedName,
     rpId: window.location.hostname,
     authenticatorSelection: {
-      authenticatorAttachment,
+      authenticatorAttachment: "cross-platform",
     },
   } as BrowserPasswordProviderOptions);
 
@@ -58,7 +63,11 @@ const App: React.FC = () => {
       const address = passkey.getPublicKey().toSuiAddress();
       setWalletAddress(address);
       setPasskeyInstance(passkey);
-      console.log("Wallet created with address:", address);
+      setWalletType('single');
+      // Clear multisig state
+      setMultiSigPublicKey(null);
+      setSingleKeyPair(null);
+      console.log("Single passkey wallet created with address:", address);
     } catch (error) {
       console.error("Error creating wallet:", error);
     } finally {
@@ -83,11 +92,24 @@ const App: React.FC = () => {
 
   const signTransaction = async () => {
     if (!passkeyInstance || !txBytes) return;
-    setSignLoading(true);
-    const bytes = fromBase64(txBytes);
-    const sig = await passkeyInstance.signTransaction(bytes);
-    setSignature(sig.signature);
-    setSignLoading(false);
+    
+    // Check if we're in multisig mode
+    if (multiSigPublicKey && singleKeyPair) {
+      setSignLoading(true);
+      const bytes = fromBase64(txBytes);
+      const passkeySig = (await passkeyInstance.signTransaction(bytes)).signature;
+      const singleSig = (await singleKeyPair.signTransaction(bytes)).signature;
+      const signature = multiSigPublicKey.combinePartialSignatures([singleSig, passkeySig]);
+      setSignature(signature);
+      setSignLoading(false);
+    } else {
+      // Single key signing mode
+      setSignLoading(true);
+      const bytes = fromBase64(txBytes);
+      const signature = (await passkeyInstance.signTransaction(bytes)).signature;
+      setSignature(signature);
+      setSignLoading(false);
+    }
   };
 
   const fetchBalance = async () => {
@@ -98,18 +120,7 @@ const App: React.FC = () => {
     setBalance(balance.totalBalance);
   };
 
-  const requestFaucet = async () => {
-    if (!walletAddress) return;
 
-    setFaucetLoading(true);
-    await requestSuiFromFaucetV0({
-      host: getFaucetHost("devnet"),
-      recipient: walletAddress,
-    });
-    console.log("Faucet request sent");
-    setFaucetLoading(false);
-    await fetchBalance();
-  };
 
   const handleLoadWallet = async () => {
     setWalletLoadLoading(true);
@@ -129,29 +140,90 @@ const App: React.FC = () => {
     const keypair = new PasskeyKeypair(commonPk.toRawBytes(), passkeyProvider);
     setPasskeyInstance(keypair);
     setWalletAddress(keypair.getPublicKey().toSuiAddress());
+    setWalletType('single');
+    // Clear multisig state
+    setMultiSigPublicKey(null);
+    setSingleKeyPair(null);
     setWalletLoadLoading(false);
+  };
+
+  const handleMultisigWallet = async () => {
+    try {
+      setLoading(true);
+      
+      // Always create a fresh passkey instance for multisig
+      const currentPasskey = await PasskeyKeypair.getPasskeyInstance(passkeyProvider);
+      setPasskeyInstance(currentPasskey);
+
+      // set up default single keypair.
+      const kp = Ed25519Keypair.fromSecretKey(
+        new Uint8Array([
+          126, 57, 195, 235, 248, 196, 105, 68, 115, 164, 8, 221, 100, 250, 137, 160, 245, 43, 220,
+          168, 250, 73, 119, 95, 19, 242, 100, 105, 81, 114, 86, 105,
+        ]),
+      );
+      setSingleKeyPair(kp);
+      const pkSingle = kp.getPublicKey();
+      
+      const pkPasskey = currentPasskey.getPublicKey();
+      
+      console.log("pkSingle:", pkSingle);
+      console.log("pkPasskey:", pkPasskey);
+      console.log("pkSingle constructor:", pkSingle.constructor.name);
+      console.log("pkPasskey constructor:", pkPasskey.constructor.name);
+    
+      // Try to get the raw bytes to see if that helps
+      const pkSingleBytes = pkSingle.toRawBytes();
+      const pkPasskeyBytes = pkPasskey.toRawBytes();
+      console.log("pkSingle bytes length:", pkSingleBytes.length);
+      console.log("pkPasskey bytes length:", pkPasskeyBytes.length);
+    
+      // construct multisig address.
+      const multiSigPublicKey = MultiSigPublicKey.fromPublicKeys({
+        threshold: 2,
+        publicKeys: [
+          { publicKey: pkSingle, weight: 1 },
+          { publicKey: pkPasskey, weight: 1 },
+        ],
+      });
+      const multisigAddr = multiSigPublicKey.toSuiAddress();
+      setMultiSigPublicKey(multiSigPublicKey);
+      setWalletAddress(multisigAddr);
+      setWalletType('multisig');
+      console.log("Multisig wallet created with address:", multisigAddr);
+    } catch (error) {
+      console.error("Error creating multisig wallet:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const sendTransaction = async () => {
     if (!walletAddress || !signature) return;
 
     setSendLoading(true);
-    const result = await client.executeTransactionBlock({
-      transactionBlock: txBytes,
-      signature: signature,
-      options: {
-        showEffects: true,
-      },
-    });
-    console.log(result);
-    setTxDigest(result.digest);
-    setSendLoading(false);
-    await fetchBalance();
+    try {
+      const result = await client.executeTransactionBlock({
+        transactionBlock: txBytes,
+        signature: signature,
+        options: {
+          showEffects: true,
+        },
+      });
+      console.log(result);
+      setTxDigest(result.digest);
+      await fetchBalance();
+    } catch (error) {
+      console.error("Transaction failed:", error);
+      // Handle the error but don't throw it
+    } finally {
+      setSendLoading(false);
+    }
   };
 
   return (
     <div className="App">
-      <h1>Passkey Wallet Example on Sui Devnet</h1>
+      <h1>Passkey Wallet Example on Sui Testnet</h1>
 
       <div className="button-group">
         <Button
@@ -170,22 +242,55 @@ const App: React.FC = () => {
         >
           Load Passkey Wallet
         </Button>
+
+        <Button
+          onClick={handleMultisigWallet}
+          disabled={loading}
+          loading={loading}
+          className="wallet-button"
+        >
+          Create Multisig Wallet with passkey and an insecure test keypair
+        </Button>
       </div>
+
+      <div className="security-warning">
+          <p>
+            <strong>Warning</strong> : This is a demo application only. The 2-of-2 multisig wallet uses a fixed, 
+            hardcoded private key for demonstration purposes. This is insecure and 
+            should never be reused for mainnet.
+          </p>
+      </div>
+
 
       {walletAddress && (
         <div className="wallet-info">
-          <h2>Wallet Created!</h2>
-          <p>Address: {walletAddress}</p>
-          <p>Balance: {balance ? parseInt(balance) / 1000000000 : "0"} SUI</p>
+          <h2>
+            {walletType === 'multisig' ? 'Multisig Wallet Created!' : 'Passkey Wallet Created!'}
+          </h2>
+          
+          <div className="wallet-details">
+            <p><strong>Type:</strong> {walletType === 'multisig' ? 'Multisig (2-of-2)' : 'Single Passkey'}</p>
+            <p><strong>Address:</strong> {walletAddress}</p>
+            <p><strong>Balance:</strong> {balance ? parseInt(balance) / 1000000000 : "0"} SUI</p>
+            
+            {walletType === 'multisig' && (
+              <div className="multisig-details">
+                <p><strong>Threshold:</strong> 2 signatures required</p>
+              </div>
+            )}
+          </div>
 
-          <Button
-            onClick={requestFaucet}
-            disabled={faucetLoading}
-            loading={faucetLoading}
-            className="faucet-button"
-          >
-            Request Devnet Tokens
-          </Button>
+          <div className="faucet-link">
+            <p>Need testnet tokens? Visit the official Sui faucet:</p>
+            <a
+              href="https://faucet.sui.io/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="faucet-button"
+            >
+              Get Testnet Tokens
+            </a>
+          </div>
 
           {txBytes && (
             <div className="transaction-info">
@@ -196,7 +301,7 @@ const App: React.FC = () => {
 
           {signature && (
             <div className="transaction-info">
-              <h3>Signature:</h3>
+              <h3>Combined Signature:</h3>
               <p className="bytes">{signature}</p>
             </div>
           )}
@@ -217,7 +322,7 @@ const App: React.FC = () => {
               loading={signLoading}
               className="sign-button"
             >
-              Sign Transaction
+              {walletType === 'multisig' ? 'Sign with Both Keys' : 'Sign Transaction'}
             </Button>
 
             <Button
@@ -229,12 +334,13 @@ const App: React.FC = () => {
               Send Transaction
             </Button>
           </div>
+          
           {txDigest && (
             <div className="transaction-info">
               <h3>Transaction Digest:</h3>
               <p className="bytes">
                 <a
-                  href={`https://suiscan.xyz/devnet/tx/${txDigest}`}
+                  href={`https://suiscan.xyz/testnet/tx/${txDigest}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

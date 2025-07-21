@@ -215,3 +215,28 @@ body {
 .send-button:hover {
   background-color: #C2185B;
 }
+
+.security-warning {
+  margin: 2rem 0;
+  padding: 1rem;
+  background-color: #FFF3CD;
+  border: 1px solid #FFEAA7;
+  border-radius: 4px;
+  border-left: 4px solid #F39C12;
+}
+
+.security-warning h3 {
+  margin-top: 0;
+  color: #D68910;
+  font-size: 1.1rem;
+}
+
+.security-warning p {
+  margin: 0.5rem 0;
+  color: #856404;
+  line-height: 1.5;
+}
+
+.security-warning strong {
+  color: #D68910;
+}
