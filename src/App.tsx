@@ -249,17 +249,20 @@ const App: React.FC = () => {
           loading={loading}
           className="wallet-button"
         >
-          Create Multisig Wallet with passkey and an insecure test keypair
+          Create 2-of-2 Multisig (Passkey + Test Key)
         </Button>
       </div>
 
-      <div className="security-warning">
+              <div className="security-warning">
+          <h3>⚠️ Security Notice</h3>
           <p>
-            <strong>Warning</strong> : This is a demo application only. The 2-of-2 multisig wallet uses a fixed, 
-            hardcoded private key for demonstration purposes. This is insecure and 
-            should never be reused for mainnet.
+            <strong>Demo Application Only:</strong> This multisig wallet uses a hardcoded private key for demonstration purposes. 
+            This is <strong>insecure</strong> and should <strong>never be used with real funds</strong>.
           </p>
-      </div>
+          <p>
+            For production use, integrate with secure wallets using WalletConnect or generate proper keypairs.
+          </p>
+        </div>
 
 
       {walletAddress && (
