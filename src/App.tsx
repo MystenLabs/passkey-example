@@ -13,7 +13,7 @@ import { fromBase64, toBase64 } from "@mysten/sui/utils";
 import React, { useEffect, useState } from "react";
 import Button from "./Button";
 import { MultiSigPublicKey } from "@mysten/sui/multisig";
-import { Ed25519Keypair, Ed25519PublicKey } from "@mysten/sui/keypairs/ed25519";
+import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 const passkeySavedName = "Sui Passkey Example";
 
