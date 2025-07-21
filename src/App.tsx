@@ -256,11 +256,9 @@ const App: React.FC = () => {
               <div className="security-warning">
           <h3>⚠️ Security Notice</h3>
           <p>
-            <strong>Demo Application Only:</strong> This 2-out-of-2 multisig wallet uses a hardcoded private key for simplicity. 
-            This is <strong>insecure</strong> and should <strong>never be used with real funds</strong>. The passkey signing logic is production ready.
-          </p>
-          <p>
-            For production use, integrate with secure wallets using WalletConnect or generate proper keypairs.
+            <strong>Demo Application Only:</strong> This 2-of-2 multisig wallet uses a hardcoded private key for demonstration purposes. 
+            Do not use it with real funds. The passkey signing flow is production ready. Overall for production use, integrate secure 
+            wallets via WalletConnect or generate and manage keypairs securely.
           </p>
         </div>
 

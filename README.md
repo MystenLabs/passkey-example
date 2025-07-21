@@ -1,18 +1,18 @@
 # Sui Passkey Wallet Example
 
-A React application demonstrating how to create and manage Sui wallets using WebAuthn passkeys, including multisignature wallet functionality.
+This React application demonstrates how to create and manage Sui wallets using WebAuthn passkeys. It also includes an example of multisignature wallet functionality.
 
 ## Features
 
-- **Single Passkey Wallet**: Create and manage a Sui wallet using only a WebAuthn passkey
-- **Multisignature Wallet**: Demo of a 2-of-2 multisig wallet combining a passkey with a test keypair
-- **Transaction Management**: Build, sign, and send transactions on Sui testnet
+- **Single Passkey Wallet**: Create and manage a Sui wallet using only a WebAuthn passkey.
+- **Multisignature Wallet**: Demonstrates a 2-of-2 multisig wallet that combines a passkey with a test keypair.
+- **Transaction Management**: Build, sign, and send transactions on Sui testnet.
 
 ## ⚠️ Security Notice
 
-**This is a demonstration application only.** The multisignature wallet implementation uses a hardcoded private key for simplicity. This is insecure and should never be used in production. Consider sign with the private key using WalletConnect. 
+**This is a demonstration application only.** The multisignature wallet example uses a hardcoded private key for simplicity. **Do not use this approach in production.** To support production use, sign with private keys through secure means such as WalletConnect.
 
-The passkey signing is production ready. 
+Passkey-based signing in this example is production ready.
 
 ## Run locally
 
@@ -31,8 +31,8 @@ For detailed information about the Sui SDK and passkey functionality:
 
 ## Contributing
 
-This is an example application. For production use, ensure you implement proper security measures and follow best practices for key management.
+This is an example project. If you're building for production, make sure to implement secure key management and follow best practices.
 
 ## License
 
-This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details.
