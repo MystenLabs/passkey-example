@@ -215,3 +215,33 @@ body {
 .send-button:hover {
   background-color: #C2185B;
 }
+
+.security-warning {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: #FFF8E1;
+  border: 1px solid #FFE082;
+  border-radius: 8px;
+  border-left: 4px solid #FF9800;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.security-warning h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #E65100;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.security-warning p {
+  margin: 0.75rem 0;
+  color: #BF360C;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.security-warning strong {
+  color: #D84315;
+  font-weight: 600;
+}
