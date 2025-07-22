@@ -25,13 +25,13 @@ const App: React.FC = () => {
   const [txBytes, setTxBytes] = useState<string>("");
   const [signature, setSignature] = useState<string>("");
   const [passkeyInstance, setPasskeyInstance] = useState<PasskeyKeypair | null>(
-      null
+    null
   );
   const [multiSigPublicKey, setMultiSigPublicKey] = useState<MultiSigPublicKey | null>(
-      null
+    null
   );
   const [singleKeyPair, setSingleKeyPair] = useState<Ed25519Keypair | null>(
-      null
+    null
   );
   const [walletType, setWalletType] = useState<'single' | 'multisig' | null>(null);
   const [sendLoading, setSendLoading] = useState(false);
@@ -188,15 +188,15 @@ const App: React.FC = () => {
     setWalletLoadLoading(true);
     const testMessage = new TextEncoder().encode("Hello world!");
     const possiblePks = await PasskeyKeypair.signAndRecover(
-        passkeyProvider,
-        testMessage
+      passkeyProvider,
+      testMessage
     );
 
     const sendTestMessage2 = async () => {
       const testMessage2 = new TextEncoder().encode("Hello world 2!");
       return await PasskeyKeypair.signAndRecover(
-          passkeyProvider,
-          testMessage2
+        passkeyProvider,
+        testMessage2
       );
     }
 
@@ -239,10 +239,10 @@ const App: React.FC = () => {
 
   const setUpDefaultSingleKeypair = () => {
     const kp = Ed25519Keypair.fromSecretKey(
-        new Uint8Array([
-          126, 57, 195, 235, 248, 196, 105, 68, 115, 164, 8, 221, 100, 250, 137, 160, 245, 43, 220,
-          168, 250, 73, 119, 95, 19, 242, 100, 105, 81, 114, 86, 105,
-        ]),
+      new Uint8Array([
+        126, 57, 195, 235, 248, 196, 105, 68, 115, 164, 8, 221, 100, 250, 137, 160, 245, 43, 220,
+        168, 250, 73, 119, 95, 19, 242, 100, 105, 81, 114, 86, 105,
+      ]),
     );
     setSingleKeyPair(kp);
     return kp.getPublicKey();
@@ -322,145 +322,145 @@ const App: React.FC = () => {
   };
 
   return (
-      <div className="App">
-        <h1>Passkey Wallet Example on Sui Testnet</h1>
+    <div className="App">
+      <h1>Passkey Wallet Example on Sui Testnet</h1>
 
-        <div className="button-group">
-          <Button
-              onClick={handleCreateWallet}
-              disabled={loading}
-              loading={loading}
-              className="wallet-button"
-          >
-            Create Passkey Wallet
-          </Button>
+      <div className="button-group">
+        <Button
+          onClick={handleCreateWallet}
+          disabled={loading}
+          loading={loading}
+          className="wallet-button"
+        >
+          Create Passkey Wallet
+        </Button>
 
-          <Button
-              onClick={() => handleLoadWallet(false)}
-              disabled={walletLoadLoading}
-              loading={walletLoadLoading}
-          >
-            Load Passkey Wallet
-          </Button>
+        <Button
+          onClick={() => handleLoadWallet(false)}
+          disabled={walletLoadLoading}
+          loading={walletLoadLoading}
+        >
+          Load Passkey Wallet
+        </Button>
 
-          <Button
-              onClick={handleMultisigWallet}
-              disabled={loading}
-              loading={loading}
-              className="wallet-button"
-          >
-            Create 2-of-2 Multisig (Passkey + Test Key)
-          </Button>
+        <Button
+          onClick={handleMultisigWallet}
+          disabled={loading}
+          loading={loading}
+          className="wallet-button"
+        >
+          Create 2-of-2 Multisig (Passkey + Test Key)
+        </Button>
 
-          <Button
-              onClick={() => handleLoadWallet(true)}
-              disabled={walletLoadLoading}
-              loading={walletLoadLoading}
-          >
-            Load Passkey Wallet(Multisig)
-          </Button>
-        </div>
-
-        <div className="security-warning">
-          <h3>⚠️ Security Notice</h3>
-          <p>
-            <strong>Demo Application Only:</strong> This 2-of-2 multisig wallet uses a hardcoded private key for demonstration purposes.
-            Do not use it with real funds. The passkey signing flow is production ready. Overall for production use, integrate secure
-            wallets via WalletConnect or generate and manage keypairs securely.
-          </p>
-        </div>
-
-
-        {walletAddress && (
-            <div className="wallet-info">
-              <h2>
-                {walletType === 'multisig' ? 'Multisig Wallet Created!' : 'Passkey Wallet Created!'}
-              </h2>
-
-              <div className="wallet-details">
-                <p><strong>Type:</strong> {walletType === 'multisig' ? 'Multisig (2-of-2)' : 'Single Passkey'}</p>
-                <p><strong>Address:</strong> {walletAddress}</p>
-                <p><strong>Balance:</strong> {balance ? parseInt(balance) / 1000000000 : "0"} SUI</p>
-
-                {walletType === 'multisig' && (
-                    <div className="multisig-details">
-                      <p><strong>Threshold:</strong> 2 signatures required</p>
-                    </div>
-                )}
-              </div>
-
-              <div className="faucet-link">
-                <p>Need testnet tokens? Visit the official Sui faucet:</p>
-                <a
-                    href="https://faucet.sui.io/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="faucet-button"
-                >
-                  Get Testnet Tokens
-                </a>
-              </div>
-
-              {txBytes && (
-                  <div className="transaction-info">
-                    <h3>Transaction Bytes:</h3>
-                    <p className="bytes">{txBytes}</p>
-                  </div>
-              )}
-
-              {signature && (
-                  <div className="transaction-info">
-                    <h3>Combined Signature:</h3>
-                    <p className="bytes">{signature}</p>
-                  </div>
-              )}
-
-              <div className="button-group">
-                <Button
-                    onClick={createTransaction}
-                    disabled={createLoading}
-                    loading={createLoading}
-                    className="transaction-button"
-                >
-                  Create Transaction
-                </Button>
-
-                <Button
-                    onClick={signTransaction}
-                    disabled={signLoading}
-                    loading={signLoading}
-                    className="sign-button"
-                >
-                  {walletType === 'multisig' ? 'Sign with Both Keys' : 'Sign Transaction'}
-                </Button>
-
-                <Button
-                    onClick={sendTransaction}
-                    disabled={sendLoading || !txBytes}
-                    loading={sendLoading}
-                    className="send-button"
-                >
-                  Send Transaction
-                </Button>
-              </div>
-
-              {txDigest && (
-                  <div className="transaction-info">
-                    <h3>Transaction Digest:</h3>
-                    <p className="bytes">
-                      <a
-                          href={`https://suiscan.xyz/testnet/tx/${txDigest}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                      >
-                        {txDigest}
-                      </a>
-                    </p>
-                  </div>
-              )}
-            </div>
-        )}
+        <Button
+          onClick={() => handleLoadWallet(true)}
+          disabled={walletLoadLoading}
+          loading={walletLoadLoading}
+        >
+          Load Passkey Wallet(Multisig)
+        </Button>
       </div>
+
+      <div className="security-warning">
+        <h3>⚠️ Security Notice</h3>
+        <p>
+          <strong>Demo Application Only:</strong> This 2-of-2 multisig wallet uses a hardcoded private key for demonstration purposes.
+          Do not use it with real funds. The passkey signing flow is production ready. Overall for production use, integrate secure
+          wallets via WalletConnect or generate and manage keypairs securely.
+        </p>
+      </div>
+
+
+      {walletAddress && (
+        <div className="wallet-info">
+          <h2>
+            {walletType === 'multisig' ? 'Multisig Wallet Created!' : 'Passkey Wallet Created!'}
+          </h2>
+
+          <div className="wallet-details">
+            <p><strong>Type:</strong> {walletType === 'multisig' ? 'Multisig (2-of-2)' : 'Single Passkey'}</p>
+            <p><strong>Address:</strong> {walletAddress}</p>
+            <p><strong>Balance:</strong> {balance ? parseInt(balance) / 1000000000 : "0"} SUI</p>
+
+            {walletType === 'multisig' && (
+              <div className="multisig-details">
+                <p><strong>Threshold:</strong> 2 signatures required</p>
+              </div>
+            )}
+          </div>
+
+          <div className="faucet-link">
+            <p>Need testnet tokens? Visit the official Sui faucet:</p>
+            <a
+              href="https://faucet.sui.io/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="faucet-button"
+            >
+              Get Testnet Tokens
+            </a>
+          </div>
+
+          {txBytes && (
+            <div className="transaction-info">
+              <h3>Transaction Bytes:</h3>
+              <p className="bytes">{txBytes}</p>
+            </div>
+          )}
+
+          {signature && (
+            <div className="transaction-info">
+              <h3>Combined Signature:</h3>
+              <p className="bytes">{signature}</p>
+            </div>
+          )}
+
+          <div className="button-group">
+            <Button
+              onClick={createTransaction}
+              disabled={createLoading}
+              loading={createLoading}
+              className="transaction-button"
+            >
+              Create Transaction
+            </Button>
+
+            <Button
+              onClick={signTransaction}
+              disabled={signLoading}
+              loading={signLoading}
+              className="sign-button"
+            >
+              {walletType === 'multisig' ? 'Sign with Both Keys' : 'Sign Transaction'}
+            </Button>
+
+            <Button
+              onClick={sendTransaction}
+              disabled={sendLoading || !txBytes}
+              loading={sendLoading}
+              className="send-button"
+            >
+              Send Transaction
+            </Button>
+          </div>
+
+          {txDigest && (
+            <div className="transaction-info">
+              <h3>Transaction Digest:</h3>
+              <p className="bytes">
+                <a
+                  href={`https://suiscan.xyz/testnet/tx/${txDigest}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {txDigest}
+                </a>
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
