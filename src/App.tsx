@@ -14,6 +14,7 @@ import React, { useEffect, useState } from "react";
 import Button from "./Button";
 import { MultiSigPublicKey } from "@mysten/sui/multisig";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import {PublicKey} from "@mysten/sui/cryptography";
 
 const passkeySavedName = "Sui Passkey Example";
 
@@ -162,6 +163,27 @@ const App: React.FC = () => {
     setBalance(balance.totalBalance);
   };
 
+  const useObjToConfirm = async (pks: PublicKey[], isMultiSig: boolean) => {
+    const finalPks: PublicKey[] = [];
+    const pkSingle = setUpDefaultSingleKeypair();
+    for (const pk of pks) {
+      // construct multisig address.
+      const multiSigPublicKey = MultiSigPublicKey.fromPublicKeys({
+        threshold: 2,
+        publicKeys: [
+          { publicKey: pkSingle, weight: 1 },
+          { publicKey: pk, weight: 1 },
+        ],
+      });
+      const res = await client.getOwnedObjects({
+        owner: !isMultiSig ? pk.toSuiAddress() : multiSigPublicKey.toSuiAddress()
+      });
+      if (res.data.length > 0)
+        finalPks.push(pk);
+    }
+    return finalPks;
+  }
+
   const handleLoadWallet = async (isMultiSig: boolean) => {
     setWalletLoadLoading(true);
     const testMessage = new TextEncoder().encode("Hello world!");
@@ -170,13 +192,18 @@ const App: React.FC = () => {
         testMessage
     );
 
-    const testMessage2 = new TextEncoder().encode("Hello world 2!");
-    const possiblePks2 = await PasskeyKeypair.signAndRecover(
-        passkeyProvider,
-        testMessage2
-    );
+    const sendTestMessage2 = async () => {
+      const testMessage2 = new TextEncoder().encode("Hello world 2!");
+      return await PasskeyKeypair.signAndRecover(
+          passkeyProvider,
+          testMessage2
+      );
+    }
 
-    const commonPk = findCommonPublicKey(possiblePks, possiblePks2);
+    const pksWithOjb = await useObjToConfirm(possiblePks, isMultiSig);
+
+    const commonPk = pksWithOjb.length === 1 ? pksWithOjb[0] : findCommonPublicKey(possiblePks, await sendTestMessage2());
+
     const keypair = new PasskeyKeypair(commonPk.toRawBytes(), passkeyProvider);
     if (!isMultiSig) {
       setPasskeyInstance(keypair);
