@@ -14,7 +14,7 @@ import React, { useEffect, useState } from "react";
 import Button from "./Button";
 import { MultiSigPublicKey } from "@mysten/sui/multisig";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import {PublicKey} from "@mysten/sui/cryptography";
+import { PublicKey } from "@mysten/sui/cryptography";
 
 const passkeySavedName = "Sui Passkey Example";
 
