@@ -40,8 +40,7 @@ const App: React.FC = () => {
   const [walletLoadLoading, setWalletLoadLoading] = useState(false);
 
   const [balance, setBalance] = useState<string | null>(null);
-  const [selectedNetwork, setSelectedNetwork] = useState<'devnet' | 'testnet' | 'mainnet'>('testnet');
-  const [client, setClient] = useState(new SuiClient({ url: getFullnodeUrl(selectedNetwork) }));
+  const client = new SuiClient({ url: getFullnodeUrl("testnet") });
 
   const passkeyProvider = new BrowserPasskeyProvider(passkeySavedName, {
     rpName: passkeySavedName,
@@ -54,13 +53,6 @@ const App: React.FC = () => {
   useEffect(() => {
     fetchBalance();
   }, [walletAddress]);
-
-  useEffect(() => {
-    setClient(new SuiClient({ url: getFullnodeUrl(selectedNetwork) }));
-    if (walletAddress) {
-      fetchBalance();
-    }
-  }, [selectedNetwork]);
 
   const handleCreateWallet = async () => {
     try {
@@ -231,21 +223,7 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
-      <h1>Passkey Wallet Example on Sui {selectedNetwork.charAt(0).toUpperCase() + selectedNetwork.slice(1)}</h1>
-
-      <div className="network-selector">
-        <label htmlFor="network-select">Network: </label>
-        <select 
-          id="network-select"
-          value={selectedNetwork} 
-          onChange={(e) => setSelectedNetwork(e.target.value as 'devnet' | 'testnet' | 'mainnet')}
-          className="network-select"
-        >
-          <option value="devnet">Devnet</option>
-          <option value="testnet">Testnet</option>
-          <option value="mainnet">Mainnet</option>
-        </select>
-      </div>
+      <h1>Passkey Wallet Example on Sui Testnet</h1>
 
       <div className="button-group">
         <Button
@@ -304,12 +282,15 @@ const App: React.FC = () => {
           </div>
 
           <div className="faucet-link">
-            {selectedNetwork === 'testnet' && (
-              <p>Need testnet tokens? Visit the official Sui faucet: <a href="https://faucet.sui.io/" target="_blank" rel="noopener noreferrer">https://faucet.sui.io/</a></p>
-            )}
-            {selectedNetwork === 'devnet' && (
-              <p>Need devnet tokens? Visit the official Sui faucet: <a href="https://faucet.sui.io/" target="_blank" rel="noopener noreferrer">https://faucet.sui.io/</a></p>
-            )}
+            <p>Need testnet tokens? Visit the official Sui faucet:</p>
+            <a
+              href="https://faucet.sui.io/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="faucet-button"
+            >
+              Get Testnet Tokens
+            </a>
           </div>
 
           {txBytes && (
@@ -321,7 +302,7 @@ const App: React.FC = () => {
 
           {signature && (
             <div className="transaction-info">
-              <h3>{walletType === 'multisig' ? 'Combined Signature:' : 'Passkey Signature:'}</h3>
+              <h3>Combined Signature:</h3>
               <p className="bytes">{signature}</p>
             </div>
           )}
@@ -360,7 +341,7 @@ const App: React.FC = () => {
               <h3>Transaction Digest:</h3>
               <p className="bytes">
                 <a
-                  href={`https://suiscan.xyz/${selectedNetwork}/tx/${txDigest}`}
+                  href={`https://suiscan.xyz/testnet/tx/${txDigest}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
