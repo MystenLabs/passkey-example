@@ -14,6 +14,7 @@ import React, { useEffect, useState } from "react";
 import Button from "./Button";
 import { MultiSigPublicKey } from "@mysten/sui/multisig";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { PublicKey } from "@mysten/sui/cryptography";
 
 const passkeySavedName = "Sui Passkey Example";
 
@@ -54,6 +55,42 @@ const App: React.FC = () => {
     fetchBalance();
   }, [walletAddress]);
 
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('sui_passkey_data') || 'null');
+    if (!stored)
+      return;
+    try {
+      setLoading(true);
+      const localPublicKey = new Uint8Array(stored.publicKeyBytes);
+      const passkey = new PasskeyKeypair(localPublicKey, passkeyProvider);
+      if (!stored.isMultiSig) {
+        const address = passkey.getPublicKey().toSuiAddress();
+        setWalletAddress(address);
+        setPasskeyInstance(passkey);
+        setWalletType('single');
+      } else {
+        const pkSingle = setUpDefaultSingleKeypair();
+        const pkPasskey = passkey.getPublicKey();
+        // construct multisig address.
+        const multiSigPublicKey = MultiSigPublicKey.fromPublicKeys({
+          threshold: 2,
+          publicKeys: [
+            { publicKey: pkSingle, weight: 1 },
+            { publicKey: pkPasskey, weight: 1 },
+          ],
+        });
+        const multisigAddr = multiSigPublicKey.toSuiAddress();
+        setMultiSigPublicKey(multiSigPublicKey);
+        setWalletAddress(multisigAddr);
+        setWalletType('multisig');
+      }
+    } catch (error) {
+      console.error("Error loading local storage PublicKey:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleCreateWallet = async () => {
     try {
       setLoading(true);
@@ -67,6 +104,12 @@ const App: React.FC = () => {
       // Clear multisig state
       setMultiSigPublicKey(null);
       setSingleKeyPair(null);
+      // set local storage
+      localStorage.setItem('sui_passkey_data', JSON.stringify({
+        publicKeyBytes: Array.from(passkey.getPublicKey().toRawBytes()),
+        address: address,
+        isMultiSig: false
+      }));
       console.log("Single passkey wallet created with address:", address);
     } catch (error) {
       console.error("Error creating wallet:", error);
@@ -92,7 +135,7 @@ const App: React.FC = () => {
 
   const signTransaction = async () => {
     if (!passkeyInstance || !txBytes) return;
-    
+
     // Check if we're in multisig mode
     if (multiSigPublicKey && singleKeyPair) {
       setSignLoading(true);
@@ -120,9 +163,28 @@ const App: React.FC = () => {
     setBalance(balance.totalBalance);
   };
 
+  const useObjToConfirm = async (pks: PublicKey[], isMultiSig: boolean) => {
+    const finalPks: PublicKey[] = [];
+    const pkSingle = setUpDefaultSingleKeypair();
+    for (const pk of pks) {
+      // construct multisig address.
+      const multiSigPublicKey = MultiSigPublicKey.fromPublicKeys({
+        threshold: 2,
+        publicKeys: [
+          { publicKey: pkSingle, weight: 1 },
+          { publicKey: pk, weight: 1 },
+        ],
+      });
+      const res = await client.getOwnedObjects({
+        owner: !isMultiSig ? pk.toSuiAddress() : multiSigPublicKey.toSuiAddress()
+      });
+      if (res.data.length > 0)
+        finalPks.push(pk);
+    }
+    return finalPks;
+  }
 
-
-  const handleLoadWallet = async () => {
+  const handleLoadWallet = async (isMultiSig: boolean) => {
     setWalletLoadLoading(true);
     const testMessage = new TextEncoder().encode("Hello world!");
     const possiblePks = await PasskeyKeypair.signAndRecover(
@@ -130,54 +192,29 @@ const App: React.FC = () => {
       testMessage
     );
 
-    const testMessage2 = new TextEncoder().encode("Hello world 2!");
-    const possiblePks2 = await PasskeyKeypair.signAndRecover(
-      passkeyProvider,
-      testMessage2
-    );
-
-    const commonPk = findCommonPublicKey(possiblePks, possiblePks2);
-    const keypair = new PasskeyKeypair(commonPk.toRawBytes(), passkeyProvider);
-    setPasskeyInstance(keypair);
-    setWalletAddress(keypair.getPublicKey().toSuiAddress());
-    setWalletType('single');
-    // Clear multisig state
-    setMultiSigPublicKey(null);
-    setSingleKeyPair(null);
-    setWalletLoadLoading(false);
-  };
-
-  const handleMultisigWallet = async () => {
-    try {
-      setLoading(true);
-      
-      // Always create a fresh passkey instance for multisig
-      const currentPasskey = await PasskeyKeypair.getPasskeyInstance(passkeyProvider);
-      setPasskeyInstance(currentPasskey);
-
-      // set up default single keypair.
-      const kp = Ed25519Keypair.fromSecretKey(
-        new Uint8Array([
-          126, 57, 195, 235, 248, 196, 105, 68, 115, 164, 8, 221, 100, 250, 137, 160, 245, 43, 220,
-          168, 250, 73, 119, 95, 19, 242, 100, 105, 81, 114, 86, 105,
-        ]),
+    const sendTestMessage2 = async () => {
+      const testMessage2 = new TextEncoder().encode("Hello world 2!");
+      return await PasskeyKeypair.signAndRecover(
+        passkeyProvider,
+        testMessage2
       );
-      setSingleKeyPair(kp);
-      const pkSingle = kp.getPublicKey();
-      
-      const pkPasskey = currentPasskey.getPublicKey();
-      
-      console.log("pkSingle:", pkSingle);
-      console.log("pkPasskey:", pkPasskey);
-      console.log("pkSingle constructor:", pkSingle.constructor.name);
-      console.log("pkPasskey constructor:", pkPasskey.constructor.name);
-    
-      // Try to get the raw bytes to see if that helps
-      const pkSingleBytes = pkSingle.toRawBytes();
-      const pkPasskeyBytes = pkPasskey.toRawBytes();
-      console.log("pkSingle bytes length:", pkSingleBytes.length);
-      console.log("pkPasskey bytes length:", pkPasskeyBytes.length);
-    
+    }
+
+    const pksWithOjb = await useObjToConfirm(possiblePks, isMultiSig);
+
+    const commonPk = pksWithOjb.length === 1 ? pksWithOjb[0] : findCommonPublicKey(possiblePks, await sendTestMessage2());
+
+    const keypair = new PasskeyKeypair(commonPk.toRawBytes(), passkeyProvider);
+    if (!isMultiSig) {
+      setPasskeyInstance(keypair);
+      setWalletAddress(keypair.getPublicKey().toSuiAddress());
+      setWalletType('single');
+      // Clear multisig state
+      setMultiSigPublicKey(null);
+      setSingleKeyPair(null);
+    } else {
+      const pkSingle = setUpDefaultSingleKeypair();
+      const pkPasskey = keypair.getPublicKey();
       // construct multisig address.
       const multiSigPublicKey = MultiSigPublicKey.fromPublicKeys({
         threshold: 2,
@@ -190,6 +227,69 @@ const App: React.FC = () => {
       setMultiSigPublicKey(multiSigPublicKey);
       setWalletAddress(multisigAddr);
       setWalletType('multisig');
+    }
+    // set local storage
+    localStorage.setItem('sui_passkey_data', JSON.stringify({
+      publicKeyBytes: Array.from(commonPk.toRawBytes()),
+      address: commonPk.toSuiAddress(),
+      isMultiSig: isMultiSig
+    }));
+    setWalletLoadLoading(false);
+  };
+
+  const setUpDefaultSingleKeypair = () => {
+    const kp = Ed25519Keypair.fromSecretKey(
+      new Uint8Array([
+        126, 57, 195, 235, 248, 196, 105, 68, 115, 164, 8, 221, 100, 250, 137, 160, 245, 43, 220,
+        168, 250, 73, 119, 95, 19, 242, 100, 105, 81, 114, 86, 105,
+      ]),
+    );
+    setSingleKeyPair(kp);
+    return kp.getPublicKey();
+  }
+
+  const handleMultisigWallet = async () => {
+    try {
+      setLoading(true);
+
+      // Always create a fresh passkey instance for multisig
+      const currentPasskey = await PasskeyKeypair.getPasskeyInstance(passkeyProvider);
+      setPasskeyInstance(currentPasskey);
+
+      // set up default single keypair.
+      const pkSingle = setUpDefaultSingleKeypair();
+
+      const pkPasskey = currentPasskey.getPublicKey();
+
+      console.log("pkSingle:", pkSingle);
+      console.log("pkPasskey:", pkPasskey);
+      console.log("pkSingle constructor:", pkSingle.constructor.name);
+      console.log("pkPasskey constructor:", pkPasskey.constructor.name);
+
+      // Try to get the raw bytes to see if that helps
+      const pkSingleBytes = pkSingle.toRawBytes();
+      const pkPasskeyBytes = pkPasskey.toRawBytes();
+      console.log("pkSingle bytes length:", pkSingleBytes.length);
+      console.log("pkPasskey bytes length:", pkPasskeyBytes.length);
+
+      // construct multisig address.
+      const multiSigPublicKey = MultiSigPublicKey.fromPublicKeys({
+        threshold: 2,
+        publicKeys: [
+          { publicKey: pkSingle, weight: 1 },
+          { publicKey: pkPasskey, weight: 1 },
+        ],
+      });
+      const multisigAddr = multiSigPublicKey.toSuiAddress();
+      setMultiSigPublicKey(multiSigPublicKey);
+      setWalletAddress(multisigAddr);
+      setWalletType('multisig');
+      // set local storage
+      localStorage.setItem('sui_passkey_data', JSON.stringify({
+        publicKeyBytes: Array.from(pkPasskey.toRawBytes()),
+        address: multisigAddr,
+        isMultiSig: true
+      }));
       console.log("Multisig wallet created with address:", multisigAddr);
     } catch (error) {
       console.error("Error creating multisig wallet:", error);
@@ -236,7 +336,7 @@ const App: React.FC = () => {
         </Button>
 
         <Button
-          onClick={handleLoadWallet}
+          onClick={() => handleLoadWallet(false)}
           disabled={walletLoadLoading}
           loading={walletLoadLoading}
         >
@@ -251,16 +351,24 @@ const App: React.FC = () => {
         >
           Create 2-of-2 Multisig (Passkey + Test Key)
         </Button>
+
+        <Button
+          onClick={() => handleLoadWallet(true)}
+          disabled={walletLoadLoading}
+          loading={walletLoadLoading}
+        >
+          Load Passkey Wallet(Multisig)
+        </Button>
       </div>
 
-              <div className="security-warning">
-          <h3>⚠️ Security Notice</h3>
-          <p>
-            <strong>Demo Application Only:</strong> This 2-of-2 multisig wallet uses a hardcoded private key for demonstration purposes. 
-            Do not use it with real funds. The passkey signing flow is production ready. Overall for production use, integrate secure 
-            wallets via WalletConnect or generate and manage keypairs securely.
-          </p>
-        </div>
+      <div className="security-warning">
+        <h3>⚠️ Security Notice</h3>
+        <p>
+          <strong>Demo Application Only:</strong> This 2-of-2 multisig wallet uses a hardcoded private key for demonstration purposes.
+          Do not use it with real funds. The passkey signing flow is production ready. Overall for production use, integrate secure
+          wallets via WalletConnect or generate and manage keypairs securely.
+        </p>
+      </div>
 
 
       {walletAddress && (
@@ -268,12 +376,12 @@ const App: React.FC = () => {
           <h2>
             {walletType === 'multisig' ? 'Multisig Wallet Created!' : 'Passkey Wallet Created!'}
           </h2>
-          
+
           <div className="wallet-details">
             <p><strong>Type:</strong> {walletType === 'multisig' ? 'Multisig (2-of-2)' : 'Single Passkey'}</p>
             <p><strong>Address:</strong> {walletAddress}</p>
             <p><strong>Balance:</strong> {balance ? parseInt(balance) / 1000000000 : "0"} SUI</p>
-            
+
             {walletType === 'multisig' && (
               <div className="multisig-details">
                 <p><strong>Threshold:</strong> 2 signatures required</p>
@@ -335,7 +443,7 @@ const App: React.FC = () => {
               Send Transaction
             </Button>
           </div>
-          
+
           {txDigest && (
             <div className="transaction-info">
               <h3>Transaction Digest:</h3>
